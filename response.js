@@ -1,14 +1,14 @@
 (() => {
     // Store a reference to the original Response constructor before we modify it
-    const $Response = globalThis.Response;
+    const _Response = globalThis.Response;
     
     // Patch the Response.prototype.clone method to handle errors gracefully
     (() => {
         // Store reference to the original clone method
-        const $clone = $Response.prototype.clone;
+        const $clone = _Response.prototype.clone;
         
         // Override the clone method with error handling
-        $Response.prototype.clone = Object.setPrototypeOf(function clone(...args) {
+        _Response.prototype.clone = Object.setPrototypeOf(function clone(...args) {
             try {
                 // Attempt to call the original clone method
                 return $clone.apply(this, args);
@@ -25,7 +25,7 @@
     })();
     
     // Replace the global Response constructor with a patched version
-    globalThis.Response = class Response extends $Response {
+    globalThis.Response = class Response extends _Response {
         constructor(...args) {
             try {
                 // Check if the status code is one that MUST NOT have a body per HTTP spec
