@@ -1,7 +1,11 @@
+(()=>{
+
+  for(const cache of [Cache, CacheStorage]){
 // Patch Cache.prototype.match to handle errors gracefully
 (() => {
   // Store reference to the original match method
-  const _match = Cache.prototype.match;
+  const _match = cache.prototype.match;
+  if(!_match)return;
   
   // Override match with error handling wrapper
   Cache.prototype.match = Object.setPrototypeOf(async function match(...args) {
@@ -20,6 +24,7 @@
 (() => {
   // Store reference to the original matchAll method
   const _matchAll = Cache.prototype.matchAll;
+  if(!_matchAll)return;
   
   // Override matchAll with error handling wrapper
   Cache.prototype.matchAll = Object.setPrototypeOf(async function matchAll(...args) {
@@ -39,6 +44,7 @@
 (() => {
   // Store reference to the original add method
   const _add = Cache.prototype.add;
+  if(!_add)return;
   
   // Override add with error handling wrapper
   Cache.prototype.add = Object.setPrototypeOf(async function add(...args) {
@@ -57,6 +63,7 @@
 (() => {
   // Store reference to the original addAll method
   const _addAll = Cache.prototype.addAll;
+  if(!_addAll)return;
   
   // Override addAll with error handling wrapper
   Cache.prototype.addAll = Object.setPrototypeOf(async function addAll(...args) {
@@ -75,6 +82,7 @@
 (() => {
   // Store reference to the original put method
   const _put = Cache.prototype.put;
+  if(!_put)return;
   
   // Override put with error handling wrapper
   Cache.prototype.put = Object.setPrototypeOf(async function put(...args) {
@@ -94,6 +102,7 @@
   // Store reference to the original delete method
   // Using _delete to avoid reserved keyword conflict
   const _delete = Cache.prototype.delete;
+  if(!_delete)return;
   
   // Override delete with error handling wrapper
   // Using _delete as function name since 'delete' is a reserved keyword
@@ -114,7 +123,7 @@
 (() => {
   // Store reference to the original keys method
   const _keys = Cache.prototype.keys;
-  
+  if(!_keys)return;
   // Override keys with error handling wrapper
   Cache.prototype.keys = Object.setPrototypeOf(async function keys(...args) {
     try {
@@ -127,4 +136,7 @@
       return [];
     }
   }, _keys);
+})();
+
+}
 })();
