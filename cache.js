@@ -138,5 +138,31 @@
   }, _keys);
 })();
 
+(() => {
+  const _open = cache.prototype.open;
+  if(!_open)return;
+    cache.prototype.open = Object.setPrototypeOf(async function open(...args) {
+    try {
+       return await _open.apply(this, args);
+    } catch (e) {
+        console.warn(e, this, ...args);
+         return Object.create(Cache.prototype);
+    }
+  }, _open);
+})();
+
+(() => {
+  const _has = cache.prototype.has;
+  if(!_has)return;
+    cache.prototype.has = Object.setPrototypeOf(async function has(...args) {
+    try {
+       return await _has.apply(this, args);
+    } catch (e) {
+        console.warn(e, this, ...args);
+         return false;
+    }
+  }, _has);
+})();
+    
 }
 })();
