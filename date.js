@@ -5,22 +5,22 @@
     let now;
     
     // Store a reference to the original (frozen) Date constructor
-    const $Date = globalThis.Date;
+    const _Date = globalThis.Date;
     
     // Patch Date.now() to use our advancing timestamp instead of frozen time
-    const $now = $Date.now;
-    $Date.now = Object.setPrototypeOf(function now() {
+    const _now = _Date.now;
+    _Date.now = Object.setPrototypeOf(function now() {
         // Delegate to new Date().getTime() which will use our cached, incrementing timestamp
         return new Date().getTime();
-    }, $now); // Preserve the original function's prototype chain
+    }, _now); // Preserve the original function's prototype chain
     
     // Replace the global Date constructor with a patched version that advances time
-    globalThis.Date = class Date extends $Date {
+    globalThis.Date = class Date extends _Date {
         constructor(...args) {
             // Initialize the timer on first Date instantiation in this request
             if (!now) {
                 // Get the request start time from the frozen Date
-                now = new $Date().getTime();
+                now = new _Date().getTime();
                 
                 // Start an interval that increments the cached time every 1ms
                 // This simulates real time progression during the request lifecycle
