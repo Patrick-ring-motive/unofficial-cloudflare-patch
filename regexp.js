@@ -3,10 +3,10 @@
   globalThis.RegExp = class RegExp extends _RegExp{
     constructor(...args){
       try{
-        super(...args);
+        return super(...args);
       }catch(e){
-        super(/$a^/);
         console.warn(e,...args);
+        return super(/$a^/);
       }
     }
   };
