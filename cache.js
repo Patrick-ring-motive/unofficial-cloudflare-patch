@@ -8,7 +8,7 @@
   if(!_match)return;
   
   // Override match with error handling wrapper
-  Cache.prototype.match = Object.setPrototypeOf(async function match(...args) {
+  cache.prototype.match = Object.setPrototypeOf(async function match(...args) {
     try {
       // Attempt to call the original match method
       return await _match.apply(this, args);
@@ -23,11 +23,11 @@
 // Patch Cache.prototype.matchAll to handle errors gracefully
 (() => {
   // Store reference to the original matchAll method
-  const _matchAll = Cache.prototype.matchAll;
+  const _matchAll = cache.prototype.matchAll;
   if(!_matchAll)return;
   
   // Override matchAll with error handling wrapper
-  Cache.prototype.matchAll = Object.setPrototypeOf(async function matchAll(...args) {
+  cache.prototype.matchAll = Object.setPrototypeOf(async function matchAll(...args) {
     try {
       // Attempt to call the original matchAll method
       return await _matchAll.apply(this, args);
@@ -43,11 +43,11 @@
 // Patch Cache.prototype.add to handle errors gracefully
 (() => {
   // Store reference to the original add method
-  const _add = Cache.prototype.add;
+  const _add = cache.prototype.add;
   if(!_add)return;
   
   // Override add with error handling wrapper
-  Cache.prototype.add = Object.setPrototypeOf(async function add(...args) {
+  cache.prototype.add = Object.setPrototypeOf(async function add(...args) {
     try {
       // Attempt to call the original add method (fetches URL and caches response)
       return await _add.apply(this, args);
@@ -62,11 +62,11 @@
 // Patch Cache.prototype.addAll to handle errors gracefully
 (() => {
   // Store reference to the original addAll method
-  const _addAll = Cache.prototype.addAll;
+  const _addAll = cache.prototype.addAll;
   if(!_addAll)return;
   
   // Override addAll with error handling wrapper
-  Cache.prototype.addAll = Object.setPrototypeOf(async function addAll(...args) {
+  cache.prototype.addAll = Object.setPrototypeOf(async function addAll(...args) {
     try {
       // Attempt to call the original addAll method (fetches multiple URLs and caches)
       return await _addAll.apply(this, args);
@@ -81,11 +81,11 @@
 // Patch Cache.prototype.put to handle errors gracefully
 (() => {
   // Store reference to the original put method
-  const _put = Cache.prototype.put;
+  const _put = cache.prototype.put;
   if(!_put)return;
   
   // Override put with error handling wrapper
-  Cache.prototype.put = Object.setPrototypeOf(async function put(...args) {
+  cache.prototype.put = Object.setPrototypeOf(async function put(...args) {
     try {
       // Attempt to call the original put method (stores request/response pair in cache)
       return await _put.apply(this, args);
@@ -101,12 +101,12 @@
 (() => {
   // Store reference to the original delete method
   // Using _delete to avoid reserved keyword conflict
-  const _delete = Cache.prototype.delete;
+  const _delete = cache.prototype.delete;
   if(!_delete)return;
   
   // Override delete with error handling wrapper
   // Using _delete as function name since 'delete' is a reserved keyword
-  Cache.prototype.delete = Object.setPrototypeOf(async function $delete(...args) {
+  cache.prototype.delete = Object.setPrototypeOf(async function $delete(...args) {
     try {
       // Attempt to call the original delete method (removes entry from cache)
       return await _delete.apply(this, args);
@@ -122,10 +122,10 @@
 // Patch Cache.prototype.keys to handle errors gracefully
 (() => {
   // Store reference to the original keys method
-  const _keys = Cache.prototype.keys;
+  const _keys = cache.prototype.keys;
   if(!_keys)return;
   // Override keys with error handling wrapper
-  Cache.prototype.keys = Object.setPrototypeOf(async function keys(...args) {
+  cache.prototype.keys = Object.setPrototypeOf(async function keys(...args) {
     try {
       // Attempt to call the original keys method (returns array of cached Request objects)
       return await _keys.apply(this, args);
