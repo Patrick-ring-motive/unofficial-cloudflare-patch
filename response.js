@@ -1,5 +1,19 @@
 (() => {
     const $Response = globalThis.Response;
+    (() => {
+        const $clone = $Response.prototype.clone;
+        $Response.prototype.clone = Object.setPrototypeOf(function clone(...args) {
+            try {
+                return $clone.apply(this, args);
+            } catch (e) {
+                console.warn(e, this, ...args);
+                return new Response(Object.getOwnPropertyNames(e ?? {}).map(x => `${x} : ${e[x]}`).join('\n'), {
+                    status: 500,
+                    statusText: `500 Internal Server Error ${e?.message}`
+                });
+            }
+        }, $clone);
+    })();
     globalThis.Response = class Response extends $Response {
         constructor(...args) {
             try {
@@ -12,8 +26,8 @@
             } catch (e) {
                 console.warn(e, ...args);
                 super(Object.getOwnPropertyNames(e ?? {}).map(x => `${x} : ${e[x]}`).join('\n'), {
-                    status: 569,
-                    statusText: e?.message
+                    status: 500,
+                    statusText: `500 Internal Server Error ${e?.message}`
                 });
             }
         }
