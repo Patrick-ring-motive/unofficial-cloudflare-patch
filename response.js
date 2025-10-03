@@ -17,7 +17,7 @@
                 // instead of throwing, which prevents crashes
                 console.warn(e, this, ...args);
                 return new Response(Object.getOwnPropertyNames(e ?? {}).map(x => `${x} : ${e[x]}`).join('\n'), {
-                    status: 500,
+                    status: 569,
                     statusText: `500 Internal Server Error ${e?.message}`
                 });
             }
@@ -44,7 +44,7 @@
                 // This prevents the error from bubbling up and crashing the application
                 console.warn(e, ...args);
                 return super(Object.getOwnPropertyNames(e ?? {}).map(x => `${x} : ${e[x]}`).join('\n'), {
-                    status: 500,
+                    status: 569,
                     statusText: `500 Internal Server Error ${e?.message}`
                 });
             }
