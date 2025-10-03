@@ -19,3 +19,23 @@
     }
   },$matchAll);
 })();
+(()=>{
+  const $add = Cache.prototype.add;
+  Cache.prototype.add = Object.setPrototypeOf(async function add(...args){
+    try{
+      return await $add.apply(this,args);
+    }catch(e){
+      console.warn(e,this,...args);
+    }
+  },$add);
+})();
+(()=>{
+  const $addAll = Cache.prototype.addAll;
+  Cache.prototype.addAll = Object.setPrototypeOf(async function addAll(...args){
+    try{
+      return await $addAll.apply(this,args);
+    }catch(e){
+      console.warn(e,this,...args);
+    }
+  },$addAll);
+})();
