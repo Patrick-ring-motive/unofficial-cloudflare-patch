@@ -1,6 +1,6 @@
 (() => {
     // Store a reference to the original fetch function before we override it
-    const $fetch = globalThis.fetch;
+    const _fetch = globalThis.fetch;
     
     // Replace the global fetch with a patched version that handles errors gracefully
     globalThis.fetch = Object.setPrototypeOf(async function fetch(...args) {
@@ -10,7 +10,7 @@
             // Attempt to call the original fetch function
             // Note: fetch returns a Promise, so errors here are typically synchronous
             // (e.g., invalid arguments, malformed URLs)
-            response = $fetch(...args);
+            response = _fetch(...args);
         } catch (e) {
             // If fetch throws synchronously (bad request setup), log and return 400
             // This catches errors like invalid URL format or bad fetch arguments
@@ -35,5 +35,5 @@
                 statusText: `500 Internal Server Error ${e?.message}`
             });
         }
-    }, $fetch); // Preserve the original function's prototype chain
+    }, _fetch); // Preserve the original function's prototype chain
 })();
