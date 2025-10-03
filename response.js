@@ -43,7 +43,7 @@
                 // If Response construction fails, log the error and create a 500 error response
                 // This prevents the error from bubbling up and crashing the application
                 console.warn(e, ...args);
-                super(Object.getOwnPropertyNames(e ?? {}).map(x => `${x} : ${e[x]}`).join('\n'), {
+                return super(Object.getOwnPropertyNames(e ?? {}).map(x => `${x} : ${e[x]}`).join('\n'), {
                     status: 500,
                     statusText: `500 Internal Server Error ${e?.message}`
                 });
