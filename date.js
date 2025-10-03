@@ -22,10 +22,10 @@
                 // Get the request start time from the frozen Date
                 now = new _Date().getTime();
                 
-                // Start an interval that increments the cached time every 1ms
+                // Start an interval that increments the cached time by 10 every 10ms
                 // This simulates real time progression during the request lifecycle
                 // Note: setInterval in Workers continues to run during the request
-                setInterval(() => now++, 1);
+                setInterval(() => (now+=10, 10);
             }
             
             // If no arguments provided (i.e., new Date()), return current advancing time
