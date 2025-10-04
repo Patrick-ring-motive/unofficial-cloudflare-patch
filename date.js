@@ -16,31 +16,7 @@
     }, _now); // Preserve the original function's prototype chain
     })();
         
-    // Replace the global Date constructor with a patched version that advances time
-    globalThis.Date = class Date extends _Date {
-        constructor(...args) {
-            // Initialize the timer on first Date instantiation in this request
-            if (!now) {
-                // Get the request start time from the frozen Date
-                now = new _Date().getTime();
-                
-                // Start an interval that increments the cached time by 10 every 10ms
-                // This simulates real time progression during the request lifecycle
-                // Note: setInterval in Workers continues to run during the request
-                setInterval(() => (now+=10, 10);
-            }
-            
-            // If no arguments provided (i.e., new Date()), return current advancing time
-            // instead of the frozen request start time
-            if (!args?.length) {
-                return super(now);
-            }
-            
-            // If arguments provided (specific date/time), pass through to original Date
-            // e.g., new Date('2024-01-01') or new Date(2024, 0, 1)
-            return super(...args);
-        }
-    }
+
     globalThis.Date = function Date(...args) {
             // Initialize the timer on first Date instantiation in this request
             if (!now) {
@@ -52,7 +28,8 @@
                 // Note: setInterval in Workers continues to run during the request
                 setInterval(() => (now+=10, 10);
             }
-            
+
+            if(new.target){
             // If no arguments provided (i.e., new Date()), return current advancing time
             // instead of the frozen request start time
             if (!args?.length) {
@@ -62,5 +39,12 @@
             // If arguments provided (specific date/time), pass through to original Date
             // e.g., new Date('2024-01-01') or new Date(2024, 0, 1)
             return Reflect.construct(_Date,args,new.target);
+            }else{
+                if (!args?.length) {
+                  return _Date(now);
+                }
+                return _Date(...args);
+            }
     }
+    [Date.__proto__,Date.prototype.__proto__] = [_Date.__proto__,_Date.prototype.__proto__];
 })();
