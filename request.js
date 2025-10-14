@@ -25,7 +25,6 @@
                      }
                  }, $body)
              }, _body);
-             console.log(bodyDescriptor);
              Object.defineProperty(_Request.prototype, 'body', bodyDescriptor);
          })();
          globalThis.Request = new Proxy(_Request, {
