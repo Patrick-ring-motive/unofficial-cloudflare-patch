@@ -4,23 +4,25 @@
     let $last = 0;
     globalThis.$ticks = 0;
     const _Date = globalThis.Date;
+    const _getTime = () => Reflect.construct(_Date, []).getTime();
     (() => {
         const _now = _Date.now ?? Function.prototype;
         _Date.now = Object.setPrototypeOf(function now() {
-          if (!$now) {
-                $now = new Date.__proto__()?.getTime?.() ;
+            const _time = _getTime();
+            if (!$now) {
+                $now = _time;
                 $last = $now;
                 $start = $now;
             }
-            if($last != new Date.__proto__()?.getTime?.()){
-                $ticks = new Date.__proto__()?.getTime?.() - $last;
-                $last = new Date.__proto__()?.getTime?.();
+            if ($last != _time) {
+                $ticks = _time - $last;
+                $last = _time;
                 $now = $last;
             }
-            if($now <= new Date.__proto__().getTime()){
+            if ($now <= _time) {
                 setInterval(() => {
                     $ticks++;
-                    $now =  $start + $ticks;
+                    $now = $start + $ticks;
                 }, 1);
                 $now++;
             }
@@ -28,35 +30,19 @@
         }, _now);
     })();
     globalThis.Date = function Date(...args) {
-            if (!$now) {
-                $now = new Date.__proto__()?.getTime?.();
-                $last = $now;
-                $start = $now;
+        _Date.now();
+        if (new.target) {
+            if (!args?.length) {
+                return Reflect.construct(_Date, [$now], new.target);
             }
-            if($last != new Date.__proto__()?.getTime?.()){
-                $ticks = new Date.__proto__()?.getTime?.() - $last;
-                $last = new Date.__proto__()?.getTime?.();
-                $now = $last;
-                $ticks=0;
+            return Reflect.construct(_Date, args, new.target);
+        } else {
+            if (!args?.length) {
+                return _Date($now);
             }
-            if($now <= new Date.__proto__().getTime()){
-                setInterval(() => {
-                    $ticks++;
-                    $now =  $start + $ticks;
-                }, 1);
-                $now++;
-            }
-            if (new.target) {
-                if (!args?.length) {
-                    return Reflect.construct(_Date, [$now], new.target);
-                }
-                return Reflect.construct(_Date, args, new.target);
-            } else {
-                if (!args?.length) {
-                    return _Date($now);
-                }
-                return _Date(...args);
-            }
-        };
-        [Date.__proto__, Date.prototype.__proto__] = [_Date, _Date.prototype];
+            return _Date(...args);
+        }
+    };
+    Object.setPrototypeOf(Date, _Date);
+    Object.setPrototypeOf(Date.prototype, _Date.prototype);
 })();
