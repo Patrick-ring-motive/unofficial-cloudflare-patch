@@ -17,7 +17,7 @@
          globalThis.Request = new Proxy(_Request, {
              construct(target, args, newTarget) {
                  try {
-                     return new _Request(...args);
+                     return Reflect.construct(target, args, newTarget)
                  } catch (e) {
                      console.warn(e, ...args);
                      return new Response(Object.getOwnPropertyNames(e ?? {}).map(x => `${x} : ${e[x]}`).join('\n'), {
