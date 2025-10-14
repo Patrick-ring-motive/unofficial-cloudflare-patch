@@ -2,6 +2,7 @@
     let $start = 0;
     let $now = 0;
     let $last = 0;
+    let $timer = 0;
     globalThis.$ticks = 0;
     const _Date = globalThis.Date;
     const _getTime = () => Reflect.construct(_Date, []).getTime();
@@ -15,16 +16,25 @@
                 $start = $now;
             }
             if ($last != _time) {
-                $ticks = _time - $last;
+                $ticks = _time - $start;
                 $last = _time;
                 $now = $last;
+                try {
+                    clearInterval($timer);
+                } catch (e) {
+                    console.warn(e);
+                }
+                $timer = 0;
             }
-            if ($now <= _time) {
-                setInterval(() => {
-                    $ticks++;
-                    $now = $start + $ticks;
-                }, 1);
-                $now++;
+            if (!$timer) {
+                try {
+                    $timer = setInterval(() => {
+                        $ticks++;
+                        $now = $start + $ticks;
+                    }, 1);
+                } catch (e) {
+                    console.warn(e);
+                }
             }
             return $now;
         }, _now);
