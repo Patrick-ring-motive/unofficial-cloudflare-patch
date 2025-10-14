@@ -11,21 +11,22 @@
                  }
              }, _clone);
          })();
-          (() => {
-             const _body = Object.getOwnPropertyDescriptor(_Request.prototype);
-             if(!_body?.get)return;
-               const $body = _body.get;
-               const bodyDescriptor = Object.setPrototypeOf({
-                    get:Object.setPrototypeOf(function body(...args) {
-                 try {
-                     return $body.apply(this, args);
-                 } catch (e) {
-                     console.warn(e, this, ...args);
-                     return null;
-                 }
-             }, $body)},_body);
-               console.log(bodyDescriptor);
-             Object.defineProperty(_Request.prototype,'body',bodyDescriptor);
+         (() => {
+             const _body = Object.getOwnPropertyDescriptor(_Request.prototype, 'body');
+             if (!_body?.get) return;
+             const $body = _body.get;
+             const bodyDescriptor = Object.setPrototypeOf({
+                 get: Object.setPrototypeOf(function body(...args) {
+                     try {
+                         return $body.apply(this, args);
+                     } catch (e) {
+                         console.warn(e, this, ...args);
+                         return null;
+                     }
+                 }, $body)
+             }, _body);
+             console.log(bodyDescriptor);
+             Object.defineProperty(_Request.prototype, 'body', bodyDescriptor);
          })();
          globalThis.Request = new Proxy(_Request, {
              construct(target, args, newTarget) {
