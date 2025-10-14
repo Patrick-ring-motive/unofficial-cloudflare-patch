@@ -39,6 +39,12 @@
             return $now;
         }, _now);
     })();
+    (() => {
+        const _now = performance.now ?? Function.prototype;
+        performance.now = Object.setPrototypeOf(function now() {
+            return _Date.now();
+        }, _now);
+    })();
     globalThis.Date = function Date(...args) {
         _Date.now();
         if (new.target) {
