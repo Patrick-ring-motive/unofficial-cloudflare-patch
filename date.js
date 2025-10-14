@@ -7,7 +7,7 @@
     const _Date = globalThis.Date;
     (() => {
         // Patch Date.now() to use our advancing timestamp instead of frozen time
-        const _now = _Date.now;
+        const _now = _Date.now ?? Function.prototype;
         _Date.now = Object.setPrototypeOf(function now() {
             // Delegate to new Date().getTime() which will use our cached, incrementing timestamp
             return new Date().getTime();
@@ -22,14 +22,14 @@
                 // This simulates real time progression during the request lifecycle
                 // Note: setInterval in Workers continues to run during the request
                 setInterval(() => {
-                    now = Math.max(now + 10, new _Date.getTime());
+                    now = Math.max(now + 10, new _Date().getTime());
                 }, 10);
             }
             if (new.target) {
                 // If no arguments provided (i.e., new Date()), return current advancing time
                 // instead of the frozen request start time
                 if (!args?.length) {
-                    return Reflect.construct(_Date, [now], new.target);;
+                    return Reflect.construct(_Date, [now], new.target);
                 }
                 // If arguments provided (specific date/time), pass through to original Date
                 // e.g., new Date('2024-01-01') or new Date(2024, 0, 1)
@@ -40,6 +40,6 @@
                 }
                 return _Date(...args);
             }
-        }
-        [Date.__proto__, Date.prototype.__proto__] = [_Date.__proto__, _Date.prototype.__proto__];
+        };
+        [Date.__proto__, Date.prototype.__proto__] = [_Date, _Date.prototype];
 })();
