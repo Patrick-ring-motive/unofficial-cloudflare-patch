@@ -1,5 +1,5 @@
 (() => {
-    const Extends = (thisClass, superClass) => {
+    const extend = (thisClass, superClass) => {
         try {
             Object.setPrototypeOf(thisClass, superClass);
             Object.setPrototypeOf(
@@ -19,7 +19,7 @@
     (() => {
         const _RegExp = globalThis.RegExp;
         (() => {
-            globalThis.RegExp = Extends(function RegExp(...args) {
+            globalThis.RegExp = extend(function RegExp(...args) {
                 if (new.target) {
                     try {
                         return Reflect.construct(_RegExp, args, new.target);
