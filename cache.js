@@ -1,4 +1,21 @@
 (() => {
+  const extend = (thisClass, superClass) => {
+        try {
+            Object.setPrototypeOf(thisClass, superClass);
+            Object.setPrototypeOf(
+                thisClass.prototype,
+                superClass?.prototype ??
+                superClass?.constructor?.prototype ??
+                superClass
+            );
+        } catch (e) {
+            console.warn(e, {
+                thisClass,
+                superClass
+            });
+        }
+        return thisClass;
+    };
   // Patch both Cache and CacheStorage prototypes with error handling
   // This ensures all cache operations are resilient across both APIs
   for (const cache of [Cache, CacheStorage]) {
@@ -11,7 +28,7 @@
       if (!_match) return;
       
       // Override match with error handling wrapper
-      cache.prototype.match = Object.setPrototypeOf(async function match(...args) {
+      cache.prototype.match = extend(async function match(...args) {
         try {
           // Attempt to call the original match method
           return await _match.apply(this, args);
@@ -31,7 +48,7 @@
       if (!_matchAll) return;
       
       // Override matchAll with error handling wrapper
-      cache.prototype.matchAll = Object.setPrototypeOf(async function matchAll(...args) {
+      cache.prototype.matchAll = extend(async function matchAll(...args) {
         try {
           // Attempt to call the original matchAll method
           return await _matchAll.apply(this, args);
@@ -52,7 +69,7 @@
       if (!_add) return;
       
       // Override add with error handling wrapper
-      cache.prototype.add = Object.setPrototypeOf(async function add(...args) {
+      cache.prototype.add = extend(async function add(...args) {
         try {
           // Attempt to call the original add method (fetches URL and caches response)
           return await _add.apply(this, args);
@@ -72,7 +89,7 @@
       if (!_addAll) return;
       
       // Override addAll with error handling wrapper
-      cache.prototype.addAll = Object.setPrototypeOf(async function addAll(...args) {
+      cache.prototype.addAll = extend(async function addAll(...args) {
         try {
           // Attempt to call the original addAll method (fetches multiple URLs and caches)
           return await _addAll.apply(this, args);
@@ -92,7 +109,7 @@
       if (!_put) return;
       
       // Override put with error handling wrapper
-      cache.prototype.put = Object.setPrototypeOf(async function put(...args) {
+      cache.prototype.put = extend(async function put(...args) {
         try {
           // Attempt to call the original put method (stores request/response pair in cache)
           return await _put.apply(this, args);
@@ -114,7 +131,7 @@
       
       // Override delete with error handling wrapper
       // Using $delete as function name since 'delete' is a reserved keyword
-      cache.prototype.delete = Object.setPrototypeOf(async function $delete(...args) {
+      cache.prototype.delete = extend(async function $delete(...args) {
         try {
           // Attempt to call the original delete method (removes entry from cache)
           return await _delete.apply(this, args);
@@ -135,7 +152,7 @@
       if (!_keys) return;
       
       // Override keys with error handling wrapper
-      cache.prototype.keys = Object.setPrototypeOf(async function keys(...args) {
+      cache.prototype.keys = extend(async function keys(...args) {
         try {
           // Attempt to call the original keys method (returns array of cached Request objects)
           return await _keys.apply(this, args);
@@ -156,7 +173,7 @@
       if (!_open) return;
       
       // Override open with error handling wrapper
-      cache.prototype.open = Object.setPrototypeOf(async function open(...args) {
+      cache.prototype.open = extend(async function open(...args) {
         try {
           // Attempt to open the named cache
           return await _open.apply(this, args);
@@ -177,7 +194,7 @@
       if (!_has) return;
       
       // Override has with error handling wrapper
-      cache.prototype.has = Object.setPrototypeOf(async function has(...args) {
+      cache.prototype.has = extend(async function has(...args) {
         try {
           // Attempt to check if named cache exists
           return await _has.apply(this, args);
