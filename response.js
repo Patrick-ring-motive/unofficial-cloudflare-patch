@@ -1,4 +1,21 @@
 (() => {
+    const extend = (thisClass, superClass) => {
+        try {
+            Object.setPrototypeOf(thisClass, superClass);
+            Object.setPrototypeOf(
+                thisClass.prototype,
+                superClass?.prototype ??
+                superClass?.constructor?.prototype ??
+                superClass
+            );
+        } catch (e) {
+            console.warn(e, {
+                thisClass,
+                superClass
+            });
+        }
+        return thisClass;
+    };
     // Store a reference to the original Response constructor before we modify it
     const _Response = globalThis.Response;
     
@@ -8,7 +25,7 @@
         const $clone = _Response.prototype.clone;
         
         // Override the clone method with error handling
-        _Response.prototype.clone = Object.setPrototypeOf(function clone(...args) {
+        _Response.prototype.clone = extend(function clone(...args) {
             try {
                 // Attempt to call the original clone method
                 return $clone.apply(this, args);
