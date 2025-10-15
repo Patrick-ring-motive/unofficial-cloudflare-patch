@@ -1,8 +1,25 @@
      (() => {
+     const extend = (thisClass, superClass) => {
+        try {
+            Object.setPrototypeOf(thisClass, superClass);
+            Object.setPrototypeOf(
+                thisClass.prototype,
+                superClass?.prototype ??
+                superClass?.constructor?.prototype ??
+                superClass
+            );
+        } catch (e) {
+            console.warn(e, {
+                thisClass,
+                superClass
+            });
+        }
+        return thisClass;
+    };
          const _Request = globalThis.Request;
          (() => {
              const _clone = _Request.prototype.clone;
-             _Request.prototype.clone = Object.setPrototypeOf(function clone(...args) {
+             _Request.prototype.clone = extend(function clone(...args) {
                  try {
                      return _clone.apply(this, args);
                  } catch (e) {
@@ -15,8 +32,8 @@
              const _body = Object.getOwnPropertyDescriptor(_Request.prototype, 'body');
              if (!_body?.get) return;
              const $body = _body.get;
-             const bodyDescriptor = Object.setPrototypeOf({
-                 get: Object.setPrototypeOf(function body(...args) {
+             const bodyDescriptor = extend({
+                 get: extend(function body(...args) {
                      try {
                          return $body.apply(this, args);
                      } catch (e) {
