@@ -25,14 +25,14 @@
                         return Reflect.construct(_RegExp, args, new.target);
                     } catch (e) {
                         console.warn(e, ...args);
-                        return Reflect.construct(_RegExp, [/$a^/], new.target);
+                        return Reflect.construct(_RegExp, [/$RegExp^/], new.target);
                     }
                 }
                 try {
                     return _RegExp(...args);
                 } catch (e) {
                     console.warn(e, ...args);
-                    return _RegExp(/$a^/);
+                    return _RegExp(/$RegExp^/);
                 }
             }, _RegExp);
         })();
