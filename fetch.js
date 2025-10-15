@@ -1,9 +1,26 @@
 (() => {
+    const extend = (thisClass, superClass) => {
+        try {
+            Object.setPrototypeOf(thisClass, superClass);
+            Object.setPrototypeOf(
+                thisClass.prototype,
+                superClass?.prototype ??
+                superClass?.constructor?.prototype ??
+                superClass
+            );
+        } catch (e) {
+            console.warn(e, {
+                thisClass,
+                superClass
+            });
+        }
+        return thisClass;
+    };
     // Store a reference to the original fetch function before we override it
     const _fetch = globalThis.fetch;
     
     // Replace the global fetch with a patched version that handles errors gracefully
-    globalThis.fetch = Object.setPrototypeOf(async function fetch(...args) {
+    globalThis.fetch = extend(async function fetch(...args) {
         let response;
         
         try {
