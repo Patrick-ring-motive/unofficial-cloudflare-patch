@@ -63,9 +63,12 @@
         if(isPromise(presponse)){
             presponse = await presponse;
         }
-        console.log(presponse);
-        return presponse?.clone?.()?.arrayBuffer?.() 
-        ?? presponse.slice();
+        const parr = presponse?.clone?.()?.arrayBuffer?.() 
+        if(isValidResponse(presponse)){
+            parr.isValid = true;
+        }
+        return parr;
+        
     };
     globalThis[$fetch] = fetch;
     globalThis.fetch = async function fetch() {
@@ -78,14 +81,14 @@
                     request[$response] = cachedResponse;
                     if (isPromise(cachedResponse)) {
                         cachedResponse = await cachedResponse;
-                        if (isValidResponse(cachedResponse)) {
-                            WeakCache.set(request.url, cachedResponse);
-                        } else {
-                            WeakCache.delete(request.url);
-                        }
+                         if(cachedResponse.isValid){
+                        WeakCache.set(request.url, cachedResponse);
+                         }else{
+                            WeakCache.delete(request.url); 
+                         }
                     }
                     try {
-                        response = new Response(cachedResponse);
+                        response = new Response(cachedResponse,{headers:{'from-cache':'true'}});
                         response[$response] = cachedResponse;
                     } catch {
                         WeakCache.delete(request.url);
@@ -102,6 +105,7 @@
                     }
                 }
             }
+        
             if (!isResponse(response)) {
                 response = await globalThis[$fetch](...arguments);
             }
