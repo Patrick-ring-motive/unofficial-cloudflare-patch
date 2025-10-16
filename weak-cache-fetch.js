@@ -53,7 +53,7 @@
         }
     };
 
-    const isValidResponse = x => (x?.status === 200 && !x?.bodyUsed && !x?.body?.locked) || x?.status === 304;
+    const isValidResponse = x => (x?.status === 200 && !x?.bodyUsed && !x?.body?.locked);
     const isResponse = x => instanceOf(x, Response) || x?.constructor?.name == 'Response';
     const isPromise = x => instanceOf(x, Promise) || x?.constructor?.name == 'Promise' || typeof x?.then === 'function';
     globalThis.WeakCache = new WeakRefMap();
