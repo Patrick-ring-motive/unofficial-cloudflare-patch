@@ -3,6 +3,7 @@
 function camelToKebab(str) {
   return str.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
 }
+  
 const ReflectHas = (...args)=>{
   try{
     return Reflect.has(...args);
@@ -30,6 +31,30 @@ const ReflectSet = (...args)=>{
 // Store the original Headers prototype
 const HeadersPrototype = Headers.prototype;
 
+const HeadersPrototypeHas = (...args)=>{
+  try{
+    return HeadersPrototype.has(...args);
+  }catch(e){
+    console.warn(e,...args);
+  }
+};
+
+const HeadersPrototypeGet = (...args)=>{
+  try{
+    return HeadersPrototype.get(...args);
+  }catch(e){
+    console.warn(e,...args);
+  }
+};
+
+const HeadersPrototypeSet = (...args)=>{
+  try{
+    return HeadersPrototype.set(...args);
+  }catch(e){
+    console.warn(e,...args);
+  }
+};
+  
 // Create the Proxy handler
 const headersProxyHandler = {
   get(target, prop, receiver) {
