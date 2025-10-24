@@ -33,30 +33,30 @@ const ReflectSet = (...args) => {
 };
 for(const WebMap of [Headers, FormData, URLSearchParams]){
 // Store the original Headers prototype
-const HeadersPrototype = Headers.prototype;
+const WebMapPrototype = WebMap.prototype;
 
 // Utility wrappers for HeadersPrototype methods
-const HeadersPrototypeHas = (...args) => {
+const WebMapPrototypeHas = (...args) => {
   try {
-    return HeadersPrototype.has.call(...args);
+    return WebMapPrototype.has.call(...args);
   } catch (e) {
     console.warn(e, ...args);
     return false;
   }
 };
 
-const HeadersPrototypeGet = (...args) => {
+const WebMapPrototypeGet = (...args) => {
   try {
-    return HeadersPrototype.get.call(...args);
+    return WebMapPrototype.get.call(...args);
   } catch (e) {
     console.warn(e, ...args);
     return undefined;
   }
 };
 
-const HeadersPrototypeSet = (...args) => {
+const WebMapPrototypeSet = (...args) => {
   try {
-    return HeadersPrototype.set.call(...args);
+    return WebMapPrototype.set.call(...args);
   } catch (e) {
     console.warn(e, ...args);
     return false;
@@ -64,7 +64,7 @@ const HeadersPrototypeSet = (...args) => {
 };
 
 // Create the Proxy handler
-const headersProxyHandler = {
+const WebMapProxyHandler = {
   get(target, prop, receiver) {
     // If prop is a symbol or not a string, use default behavior
     if (typeof prop !== 'string') {
@@ -78,14 +78,14 @@ const headersProxyHandler = {
       }
 
       // 2. Check if the header exists as-is (e.g., 'Content-Type')
-      const value = HeadersPrototypeGet(receiver, prop);
+      const value = WebMapPrototypeGet(receiver, prop);
       if (value != null) {
         return value;
       }
 
       // 3. Convert camelCase to kebab-case and check headers
       const kebabProp = camelToKebab(prop);
-      return HeadersPrototypeGet(receiver, kebabProp);
+      return WebMapPrototypeGet(receiver, kebabProp);
     } catch (e) {
       console.warn(e, prop, receiver);
       return undefined; // Return undefined on error to prevent breaking
@@ -101,20 +101,20 @@ const headersProxyHandler = {
     try {
       // For setters, prioritize kebab-case headers, then direct header, then direct property
       const kebabProp = camelToKebab(prop);
-      if (HeadersPrototypeHas(receiver, kebabProp)) {
+      if (WebMapPrototypeHas(receiver, kebabProp)) {
         // If the kebab-case header exists, update it
-        HeadersPrototypeSet(receiver, kebabProp, value);
+        WebMapPrototypeSet(receiver, kebabProp, value);
         return true;
-      } else if (HeadersPrototypeHas(receiver, prop)) {
+      } else if (WebMapPrototypeHas(receiver, prop)) {
         // If the header exists as-is, update it
-        HeadersPrototypeSet(receiver, prop, value);
+        WebMapPrototypeSet(receiver, prop, value);
         return true;
       } else if (ReflectHas(target, prop, receiver)) {
         // If the property exists directly on the target, set it
         return ReflectSet(target, prop, value, receiver);
       } else {
         // Otherwise, set as a new header in kebab-case
-        HeadersPrototypeSet(receiver, kebabProp, value);
+        WebMapPrototypeSet(receiver, kebabProp, value);
         return true;
       }
     } catch (e) {
@@ -132,8 +132,8 @@ const headersProxyHandler = {
     try {
       return (
         ReflectHas(target, prop) ||
-        HeadersPrototypeHas(target, prop) ||
-        HeadersPrototypeHas(target, camelToKebab(prop))
+        WebMapPrototypeHas(target, prop) ||
+        WebMapPrototypeHas(target, camelToKebab(prop))
       );
     } catch (e) {
       console.warn(e, prop, target);
@@ -143,7 +143,7 @@ const headersProxyHandler = {
 };
 
 // Apply the Proxy to Headers.prototype
-Object.setPrototypeOf(Headers.prototype, new Proxy(HeadersPrototype, headersProxyHandler));
+Object.setPrototypeOf(WebMap.prototype, new Proxy(WebMapPrototype, WebMapProxyHandler));
 }
 // Example usage:
 const headers = new Headers();
