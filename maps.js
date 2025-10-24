@@ -1,67 +1,79 @@
 (()=>{
-  // Utility to convert camelCase to kebab-case
+// Utility to convert camelCase to kebab-case
 function camelToKebab(str) {
   return String(str).replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
 }
-  
-const ReflectHas = (...args)=>{
-  try{
+
+// Utility wrappers for Reflect methods
+const ReflectHas = (...args) => {
+  try {
     return Reflect.has(...args);
-  }catch(e){
-    console.warn(e,...args);
+  } catch (e) {
+    console.warn(e, ...args);
+    return false;
   }
 };
 
-const ReflectGet = (...args)=>{
-  try{
+const ReflectGet = (...args) => {
+  try {
     return Reflect.get(...args);
-  }catch(e){
-    console.warn(e,...args);
+  } catch (e) {
+    console.warn(e, ...args);
+    return undefined;
   }
 };
 
-const ReflectSet = (...args)=>{
-  try{
-    return Reflect.Set(...args);
-  }catch(e){
-    console.warn(e,...args);
+const ReflectSet = (...args) => {
+  try {
+    return Reflect.set(...args);
+  } catch (e) {
+    console.warn(e, ...args);
+    return false;
   }
 };
-  
+for(const WebMap of [Headers, FormData, URLSearchParams]){
 // Store the original Headers prototype
 const HeadersPrototype = Headers.prototype;
 
-const HeadersPrototypeHas = (...args)=>{
-  try{
+// Utility wrappers for HeadersPrototype methods
+const HeadersPrototypeHas = (...args) => {
+  try {
     return HeadersPrototype.has.call(...args);
-  }catch(e){
-    console.warn(e,...args);
+  } catch (e) {
+    console.warn(e, ...args);
+    return false;
   }
 };
 
-const HeadersPrototypeGet = (...args)=>{
-  try{
+const HeadersPrototypeGet = (...args) => {
+  try {
     return HeadersPrototype.get.call(...args);
-  }catch(e){
-    console.warn(e,...args);
+  } catch (e) {
+    console.warn(e, ...args);
+    return undefined;
   }
 };
 
-const HeadersPrototypeSet = (...args)=>{
-  try{
+const HeadersPrototypeSet = (...args) => {
+  try {
     return HeadersPrototype.set.call(...args);
-  }catch(e){
-    console.warn(e,...args);
+  } catch (e) {
+    console.warn(e, ...args);
+    return false;
   }
 };
-  
+
 // Create the Proxy handler
 const headersProxyHandler = {
   get(target, prop, receiver) {
+    // If prop is a symbol or not a string, use default behavior
+    if (typeof prop !== 'string') {
+      return ReflectGet(target, prop, receiver);
+    }
 
     try {
       // 1. Check if the property exists directly on the Headers instance
-      if (prop in target) {
+      if (ReflectHas(target, prop)) {
         return ReflectGet(target, prop, receiver);
       }
 
@@ -81,10 +93,15 @@ const headersProxyHandler = {
   },
 
   set(target, prop, value, receiver) {
+    // If prop is a symbol or not a string, use default behavior
+    if (typeof prop !== 'string') {
+      return ReflectSet(target, prop, value, receiver);
+    }
+
     try {
-      // For setters, prioritize kebab-case headers, then direct property
+      // For setters, prioritize kebab-case headers, then direct header, then direct property
       const kebabProp = camelToKebab(prop);
-      if (HeadersPrototypHas(receiver, kebabProp)) {
+      if (HeadersPrototypeHas(receiver, kebabProp)) {
         // If the kebab-case header exists, update it
         HeadersPrototypeSet(receiver, kebabProp, value);
         return true;
@@ -92,7 +109,8 @@ const headersProxyHandler = {
         // If the header exists as-is, update it
         HeadersPrototypeSet(receiver, prop, value);
         return true;
-      } else if(ReflectHas(target, prop, receiver)){
+      } else if (ReflectHas(target, prop, receiver)) {
+        // If the property exists directly on the target, set it
         return ReflectSet(target, prop, value, receiver);
       } else {
         // Otherwise, set as a new header in kebab-case
@@ -105,12 +123,28 @@ const headersProxyHandler = {
     }
   },
 
-  
+  has(target, prop) {
+    // Handle `in` operator (e.g., for ??=)
+    if (typeof prop !== 'string') {
+      return ReflectHas(target, prop);
+    }
+
+    try {
+      return (
+        ReflectHas(target, prop) ||
+        HeadersPrototypeHas(target, prop) ||
+        HeadersPrototypeHas(target, camelToKebab(prop))
+      );
+    } catch (e) {
+      console.warn(e, prop, target);
+      return false; // Return false on error
+    }
+  }
 };
 
 // Apply the Proxy to Headers.prototype
 Object.setPrototypeOf(Headers.prototype, new Proxy(HeadersPrototype, headersProxyHandler));
-
+}
 // Example usage:
 const headers = new Headers();
 
