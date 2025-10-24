@@ -1,9 +1,11 @@
 (()=>{
 // Utility to convert camelCase to kebab-case
-function camelToKebab(str) {
+const camelToKebab=(str)=> {
   return String(str).replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
-}
+};
 
+const isString = x => typeof x === 'string' || x instanceof String || x?.constructor?.name == 'String';
+  
 // Utility wrappers for Reflect methods
 const ReflectHas = (...args) => {
   try {
@@ -67,7 +69,7 @@ const WebMapPrototypeSet = (...args) => {
 const WebMapProxyHandler = {
   get(target, prop, receiver) {
     // If prop is a symbol or not a string, use default behavior
-    if (typeof prop !== 'string') {
+    if (isString(prop)) {
       return ReflectGet(target, prop, receiver);
     }
 
@@ -94,7 +96,7 @@ const WebMapProxyHandler = {
 
   set(target, prop, value, receiver) {
     // If prop is a symbol or not a string, use default behavior
-    if (typeof prop !== 'string') {
+    if (isString(prop)) {
       return ReflectSet(target, prop, value, receiver);
     }
 
@@ -125,7 +127,7 @@ const WebMapProxyHandler = {
 
   has(target, prop) {
     // Handle `in` operator (e.g., for ??=)
-    if (typeof prop !== 'string') {
+    if (isString(prop)) {
       return ReflectHas(target, prop);
     }
 
