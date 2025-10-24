@@ -3,17 +3,36 @@
 function camelToKebab(str) {
   return str.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
 }
+const ReflectHas = (...args)=>{
+  try{
+    return Reflect.has(...args);
+  }catch(e){
+    console.warn(e,...args);
+  }
+};
 
+const ReflectGet = (...args)=>{
+  try{
+    return Reflect.get(...args);
+  }catch(e){
+    console.warn(e,...args);
+  }
+};
+
+const ReflectSet = (...args)=>{
+  try{
+    return Reflect.Set(...args);
+  }catch(e){
+    console.warn(e,...args);
+  }
+};
+  
 // Store the original Headers prototype
 const HeadersPrototype = Headers.prototype;
 
 // Create the Proxy handler
 const headersProxyHandler = {
   get(target, prop, receiver) {
-    // If prop is a symbol or not a string, use default behavior
-    if (typeof prop !== 'string') {
-      return Reflect.get(target, prop, receiver);
-    }
 
     try {
       // 1. Check if the property exists directly on the Headers instance
@@ -37,11 +56,6 @@ const headersProxyHandler = {
   },
 
   set(target, prop, value, receiver) {
-    // If prop is a symbol or not a string, use default behavior
-    if (typeof prop !== 'string') {
-      return Reflect.set(target, prop, value, receiver);
-    }
-
     try {
       // For setters, prioritize kebab-case headers, then direct property
       const kebabProp = camelToKebab(prop);
@@ -53,6 +67,8 @@ const headersProxyHandler = {
         // If the header exists as-is, update it
         HeadersPrototype.set.call(receiver, prop, value);
         return true;
+      } else if(Reflect.has(target, prop, receiver)){
+        return Reflect.set(target, prop, value, receiver);
       } else {
         // Otherwise, set as a new header in kebab-case
         HeadersPrototype.set.call(receiver, kebabProp, value);
