@@ -5,7 +5,7 @@ function camelToKebab(str) {
 }
 
 // Store the original Headers prototype
-const OriginalHeaders = Headers.prototype;
+const HeadersPrototype = Headers.prototype;
 
 // Create the Proxy handler
 const headersProxyHandler = {
@@ -22,14 +22,14 @@ const headersProxyHandler = {
       }
 
       // 2. Check if the header exists as-is (e.g., 'Content-Type')
-      const value = OriginalHeaders.get.call(receiver, prop);
+      const value = HeadersPrototype.get.call(receiver, prop);
       if (value !== null) {
         return value;
       }
 
       // 3. Convert camelCase to kebab-case and check headers
       const kebabProp = camelToKebab(prop);
-      return OriginalHeaders.get.call(receiver, kebabProp);
+      return HeadersPrototype.get.call(receiver, kebabProp);
     } catch (e) {
       console.warn(e, prop, receiver);
       return undefined; // Return undefined on error to prevent breaking
@@ -45,17 +45,17 @@ const headersProxyHandler = {
     try {
       // For setters, prioritize kebab-case headers, then direct property
       const kebabProp = camelToKebab(prop);
-      if (OriginalHeaders.has.call(receiver, kebabProp)) {
+      if (HeadersPrototype.has.call(receiver, kebabProp)) {
         // If the kebab-case header exists, update it
-        OriginalHeaders.set.call(receiver, kebabProp, value);
+        HeadersPrototype.set.call(receiver, kebabProp, value);
         return true;
-      } else if (OriginalHeaders.has.call(receiver, prop)) {
+      } else if (HeadersPrototype.has.call(receiver, prop)) {
         // If the header exists as-is, update it
-        OriginalHeaders.set.call(receiver, prop, value);
+        HeadersPrototype.set.call(receiver, prop, value);
         return true;
       } else {
         // Otherwise, set as a new header in kebab-case
-        OriginalHeaders.set.call(receiver, kebabProp, value);
+        HeadersPrototype.set.call(receiver, kebabProp, value);
         return true;
       }
     } catch (e) {
@@ -64,22 +64,7 @@ const headersProxyHandler = {
     }
   },
 
-  has(target, prop) {
-    try {
-      // Handle `in` operator (e.g., for ??=)
-      if (typeof prop !== 'string') {
-        return Reflect.has(target, prop);
-      }
-      return (
-        prop in target ||
-        OriginalHeaders.has.call(target, prop) ||
-        OriginalHeaders.has.call(target, camelToKebab(prop))
-      );
-    } catch (e) {
-      console.warn(e, prop, target);
-      return false; // Return false on error
-    }
-  }
+  
 };
 
 // Apply the Proxy to Headers.prototype
