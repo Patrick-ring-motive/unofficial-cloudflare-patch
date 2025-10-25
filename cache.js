@@ -195,15 +195,17 @@
       
       // Override open with error handling wrapper
       cache.prototype.open = extend(async function open(...args) {
+        let store;
         try {
           // Attempt to open the named cache
-          return await _open.apply(this, args);
+          store = await _open.apply(this, args);
         } catch (e) {
           // If open fails (e.g., quota exceeded, invalid name), log and return empty Cache object
           // Returning an empty Cache allows code to continue with cache operations that will no-op
           console.warn(e, this, ...args);
-          return Object.create(Cache.prototype);
+          store = Object.create(Cache.prototype);
         }
+        store['&name'] = String(args[0]);
       }, _open);
     })();
 
