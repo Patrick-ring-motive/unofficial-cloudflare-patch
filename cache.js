@@ -37,11 +37,13 @@
         }
         return thisClass;
     };
+  
   Q(()=>{caches['&name']='caches'});
   Q(()=>{caches.default['&name']='default'});
+  
   const putKeys = (store,...args)=>{
     const __keys__ = await caches.open('&keys');
-    const url = `https://cache.keys/${store['&name']}`;
+    const url = `https://cache.keys/${encodeURI(store['&name'])}`;
     const keyMatch = await __keys__.match(url);
     let cacheKeys;
     try{
@@ -51,6 +53,20 @@
     cacheKeys = [...new Set([...cacheKeys,...args])];
     __keys__.put(url,new Response(JSON.stringify(cacheKeys)));
   };
+
+  const deleteKeys = (store,...args)=>{
+    const __keys__ = await caches.open('&keys');
+    const url = `https://cache.keys/${encodeURI(store['&name'])}`;
+    const keyMatch = await __keys__.match(url);
+    let cacheKeys;
+    try{
+      cacheKeys = await keyMatch.clone().json();
+    }catch{}
+    cacheKeys ??= [];
+    cacheKeys = cacheKeys.filter(k=>!args.includes(k));
+    __keys__.put(url,new Response(JSON.stringify(cacheKeys)));
+  };
+  
   // Patch both Cache and CacheStorage prototypes with error handling
   // This ensures all cache operations are resilient across both APIs
   for (const cache of [Cache, CacheStorage]) {
@@ -201,7 +217,7 @@
         if(!cacheKeys?.length){
           try{
             const __keys__ = await caches.open('&keys');
-            const keyMatch = await __keys__.match(`https://cache.keys/${this['&name']}`);
+            const keyMatch = await __keys__.match(`https://cache.keys/${encodeURI(this['&name'])}`);
             cacheKeys = await keyMatch.clone().json();
           }catch(e){
             cacheKeys = [];
