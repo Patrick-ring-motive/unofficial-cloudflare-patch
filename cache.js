@@ -44,7 +44,7 @@
     };
   
   // Add name metadata to cache objects for key tracking
-  Q(()=>{caches['&name']='caches'});
+  Q(()=>{caches['&name']='default'});
   Q(()=>{caches.default['&name']='default'});
   
   // KEY TRACKING SYSTEM FOR .keys() POLYFILL
@@ -170,9 +170,11 @@
 
     // Patch cache.put to handle quota errors and track keys
     (() => {
+      cache.prototype.put ??= extend(async function put(...args){
+        const store = await caches.open('default');
+        return await store.put(...args);
+      },Cache.prototype.put);
       const _put = cache.prototype.put;
-      if (!_put) return;
-      
       // On quota exceeded: fails silently, treats cache as best-effort
       // On success: tracks the key for .keys() polyfill
       cache.prototype.put = extend(async function put(...args) {
@@ -250,6 +252,9 @@
       // Adds '&name' property for key tracking system
       cache.prototype.open = extend(async function open(...args) {
         let store;
+        if(String(args[0]).length === 0){
+          args[0] = 'default';
+        }
         try {
           store = await _open.apply(this, args);
         } catch (e) {
