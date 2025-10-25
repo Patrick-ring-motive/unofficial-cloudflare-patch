@@ -53,30 +53,38 @@
   
   // Add keys to the tracking cache when items are stored
   const putKeys = async (store,...args)=>{
-    const __keys__ = await caches.open('&keys');
-    const url = `https://cache.keys/${encodeURI(store['&name'])}`;
-    const keyMatch = await __keys__.match(url);
-    let cacheKeys;
     try{
-      cacheKeys = await keyMatch.clone().json();
-    }catch{}
-    cacheKeys ??= [];
-    cacheKeys = [...new Set([...cacheKeys,...args])];
-    return __keys__.put(url,new Response(JSON.stringify(cacheKeys)));
+      const __keys__ = await caches.open('&keys');
+      const url = `https://cache.keys/${encodeURI(store['&name'])}`;
+      const keyMatch = await __keys__.match(url);
+      let cacheKeys;
+      try{
+        cacheKeys = await keyMatch.clone().json();
+      }catch{}
+      cacheKeys ??= [];
+      cacheKeys = [...new Set([...cacheKeys,...args])];
+      return await __keys__.put(url,new Response(JSON.stringify(cacheKeys)));
+    }catch(e){
+      console.warn(e,...args);
+    }
   };
 
   // Remove keys from the tracking cache when items are deleted
   const deleteKeys = async (store,...args)=>{
-    const __keys__ = await caches.open('&keys');
-    const url = `https://cache.keys/${encodeURI(store['&name'])}`;
-    const keyMatch = await __keys__.match(url);
-    let cacheKeys;
     try{
-      cacheKeys = await keyMatch.clone().json();
-    }catch{}
-    cacheKeys ??= [];
-    cacheKeys = cacheKeys.filter(k=>!args.includes(k));
-    return __keys__.put(url,new Response(JSON.stringify(cacheKeys)));
+      const __keys__ = await caches.open('&keys');
+      const url = `https://cache.keys/${encodeURI(store['&name'])}`;
+      const keyMatch = await __keys__.match(url);
+      let cacheKeys;
+      try{
+        cacheKeys = await keyMatch.clone().json();
+      }catch{}
+      cacheKeys ??= [];
+      cacheKeys = cacheKeys.filter(k=>!args.includes(k));
+      return await __keys__.put(url,new Response(JSON.stringify(cacheKeys)));
+    }catch(e){
+      console.warn(e,...args);
+    }
   };
   
   // Patch both Cache and CacheStorage prototypes
