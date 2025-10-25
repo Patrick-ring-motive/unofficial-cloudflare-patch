@@ -1,13 +1,34 @@
 (() => {
-  const extend = (thisClass, superClass) => {
+  const Q = fn => {
         try {
-            Object.setPrototypeOf(thisClass, superClass);
+            return fn?.()
+        } catch {}
+    };
+    const constructPrototype = newClass => {
+        try {
+            if (newClass?.prototype) return newClass;
+            const constProto = newClass?.constructor?.prototype;
+            if (constProto) {
+                newClass.prototype = Q(() => constProto?.bind?.(constProto)) ?? Object.create(Object(constProto));
+                return newClass;
+            }
+            newClass.prototype = Q(() => newClass?.bind?.(newClass)) ?? Object.create(Object(newClass));
+        } catch (e) {
+            console.warn(e, newClass);
+        }
+    };
+    const extend = (thisClass, superClass) => {
+        try {
+            constructPrototype(thisClass);
+            constructPrototype(superClass);
             Object.setPrototypeOf(
                 thisClass.prototype,
                 superClass?.prototype ??
                 superClass?.constructor?.prototype ??
                 superClass
             );
+            Object.setPrototypeOf(thisClass, superClass);
+
         } catch (e) {
             console.warn(e, {
                 thisClass,
