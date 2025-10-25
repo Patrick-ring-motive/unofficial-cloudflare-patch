@@ -121,14 +121,18 @@
       
       // Override add with error handling wrapper
       cache.prototype.add = extend(async function add(...args) {
+        let added;
         try {
           // Attempt to call the original add method (fetches URL and caches response)
-          return await _add.apply(this, args);
+          added =  await _add.apply(this, args);
+          const key = String(args[0]?.url ?? args[0]);
+          putKeys(this,key);
         } catch (e) {
           // If add fails (e.g., network error, quota exceeded, invalid URL), log and continue
           // Returning undefined allows code to continue without cached result
           console.warn(e, this, ...args);
         }
+        return added;
       }, _add);
     })();
 
@@ -161,14 +165,18 @@
       
       // Override put with error handling wrapper
       cache.prototype.put = extend(async function put(...args) {
+        let output;
         try {
           // Attempt to call the original put method (stores request/response pair in cache)
-          return await _put.apply(this, args);
+          output = await _put.apply(this, args);
+          const key = String(args[0]?.url ?? args[0]);
+          putKeys(this,key);
         } catch (e) {
           // If put fails (e.g., quota exceeded, invalid request/response), log and continue
           // Allows code to continue even if caching fails - treats cache as best-effort
           console.warn(e, this, ...args);
         }
+        return output;
       }, _put);
     })();
 
@@ -183,15 +191,19 @@
       // Override delete with error handling wrapper
       // Using $delete as function name since 'delete' is a reserved keyword
       cache.prototype.delete = extend(async function $delete(...args) {
+        let del
         try {
           // Attempt to call the original delete method (removes entry from cache)
-          return await _delete.apply(this, args);
+          del = await _delete.apply(this, args);
+          const key = String(args[0]?.url ?? args[0]);
+          deleteKeys(this,key);
         } catch (e) {
           // If delete fails (e.g., cache access error), log and return false
           // Returning false is consistent with the normal return value when entry doesn't exist
           console.warn(e, this, ...args);
           return false;
         }
+        return del;
       }, _delete);
     })();
 
