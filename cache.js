@@ -102,11 +102,18 @@
       // Returns undefined on error (quota exceeded, invalid request, etc.)
       // This mimics a cache miss, allowing the app to continue without cached data
       cache.prototype.match = extend(async function match(...args) {
+        let matched;
+        const key = String(args[0]);
         try {
-          return await _match.apply(this, args);
+          matched = await _match.apply(this, args);
         } catch (e) {
           console.warn(e, this, ...args);
         }
+        this['&recentKeys'] ??= [];
+        if(!matched && this['&recentKeys'].includes(key)){
+          await deleteKeys(this,key);
+        }
+        return matched;
       }, _match);
     })();
 
