@@ -176,15 +176,26 @@
       
       // Override keys with error handling wrapper
       cache.prototype.keys = extend(async function keys(...args) {
+        let cacheKeys;
         try {
           // Attempt to call the original keys method (returns array of cached Request objects)
-          return await _keys.apply(this, args);
+          cacheKeys = await _keys.apply(this, args);
         } catch (e) {
           // If keys fails (e.g., cache access error, quota issues), log and return empty array
           // Allows iteration over results without crashing
           console.warn(e, this, ...args);
-          return [];
+          cacheKeys = [];
         }
+        if(!cacheKeys?.length){
+          try{
+            const __keys__ = await caches.open('&keys');
+            const keyMatch = await __keys__.match(`https://cache.keys/${this['&name']}`);
+            cacheKeys = await keyMatch.clone().json();
+          }catch(e){
+            cacheKeys = [];
+          }
+        }
+        return cacheKeys;
       }, _keys);
     })();
 
