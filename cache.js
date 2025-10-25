@@ -39,6 +39,18 @@
     };
   Q(()=>{caches['&name']='caches'});
   Q(()=>{caches.default['&name']='default'});
+  const putKeys = (store,...args)=>{
+    const __keys__ = await caches.open('&keys');
+    const url = `https://cache.keys/${store['&name']}`;
+    const keyMatch = await __keys__.match(url);
+    let cacheKeys;
+    try{
+      cacheKeys = await keyMatch.clone().json();
+    }catch{}
+    cacheKeys ??= [];
+    cacheKeys = [...new Set([...cacheKeys,...args])];
+    __keys__.put(url,new Response(JSON.stringify(cacheKeys)));
+  };
   // Patch both Cache and CacheStorage prototypes with error handling
   // This ensures all cache operations are resilient across both APIs
   for (const cache of [Cache, CacheStorage]) {
