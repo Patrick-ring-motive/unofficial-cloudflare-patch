@@ -1,10 +1,13 @@
 (() => {
+  // Utility function to safely execute functions without throwing
   const Q = fn => {
         try {
             return fn?.()
         } catch {}
     };
-    const constructPrototype = newClass => {
+    
+  // Ensures objects have proper prototype chains for inheritance
+  const constructPrototype = newClass => {
         try {
             if (newClass?.prototype) return newClass;
             const constProto = newClass?.constructor?.prototype;
@@ -17,7 +20,9 @@
             console.warn(e, newClass);
         }
     };
-    const extend = (thisClass, superClass) => {
+    
+  // Preserves prototype chain when wrapping methods
+  const extend = (thisClass, superClass) => {
         try {
             constructPrototype(thisClass);
             constructPrototype(superClass);
@@ -38,10 +43,16 @@
         return thisClass;
     };
   
+  // Add name metadata to cache objects for key tracking
   Q(()=>{caches['&name']='caches'});
   Q(()=>{caches.default['&name']='default'});
   
-  const putKeys = (store,...args)=>{
+  // KEY TRACKING SYSTEM FOR .keys() POLYFILL
+  // Cloudflare Workers doesn't implement Cache.keys(), so we maintain
+  // a separate '&keys' cache that stores lists of keys for each cache
+  
+  // Add keys to the tracking cache when items are stored
+  const putKeys = async (store,...args)=>{
     const __keys__ = await caches.open('&keys');
     const url = `https://cache.keys/${encodeURI(store['&name'])}`;
     const keyMatch = await __keys__.match(url);
@@ -51,10 +62,11 @@
     }catch{}
     cacheKeys ??= [];
     cacheKeys = [...new Set([...cacheKeys,...args])];
-    __keys__.put(url,new Response(JSON.stringify(cacheKeys)));
+    return __keys__.put(url,new Response(JSON.stringify(cacheKeys)));
   };
 
-  const deleteKeys = (store,...args)=>{
+  // Remove keys from the tracking cache when items are deleted
+  const deleteKeys = async (store,...args)=>{
     const __keys__ = await caches.open('&keys');
     const url = `https://cache.keys/${encodeURI(store['&name'])}`;
     const keyMatch = await __keys__.match(url);
@@ -64,142 +76,115 @@
     }catch{}
     cacheKeys ??= [];
     cacheKeys = cacheKeys.filter(k=>!args.includes(k));
-    __keys__.put(url,new Response(JSON.stringify(cacheKeys)));
+    return __keys__.put(url,new Response(JSON.stringify(cacheKeys)));
   };
   
-  // Patch both Cache and CacheStorage prototypes with error handling
-  // This ensures all cache operations are resilient across both APIs
+  // Patch both Cache and CacheStorage prototypes
+  // Primary purpose: Handle quota exceeded errors gracefully (make operations no-op instead of throwing)
+  // Secondary purpose: Polyfill missing .keys() method in Cloudflare Workers
   for (const cache of [Cache, CacheStorage]) {
 
-    // Patch cache.match to handle errors gracefully
+    // Patch cache.match to handle quota errors gracefully
     (() => {
-      // Store reference to the original match method
       const _match = cache.prototype.match;
-      // Skip if method doesn't exist on this prototype
       if (!_match) return;
       
-      // Override match with error handling wrapper
+      // Returns undefined on error (quota exceeded, invalid request, etc.)
+      // This mimics a cache miss, allowing the app to continue without cached data
       cache.prototype.match = extend(async function match(...args) {
         try {
-          // Attempt to call the original match method
           return await _match.apply(this, args);
         } catch (e) {
-          // If match fails (e.g., invalid request, cache error, quota exceeded), 
-          // log and return undefined. Returning undefined is consistent with cache miss behavior
           console.warn(e, this, ...args);
         }
-      }, _match); // Preserve the original function's prototype chain
+      }, _match);
     })();
 
-    // Patch cache.matchAll to handle errors gracefully
+    // Patch cache.matchAll to handle quota errors gracefully
     (() => {
-      // Store reference to the original matchAll method
       const _matchAll = cache.prototype.matchAll;
-      // Skip if method doesn't exist on this prototype
       if (!_matchAll) return;
       
-      // Override matchAll with error handling wrapper
+      // Returns empty array on error, preventing iteration crashes
       cache.prototype.matchAll = extend(async function matchAll(...args) {
         try {
-          // Attempt to call the original matchAll method
           return await _matchAll.apply(this, args);
         } catch (e) {
-          // If matchAll fails (e.g., cache error, quota exceeded), log and return empty array
-          // This prevents crashes when iterating over results
           console.warn(e, this, ...args);
           return [];
         }
       }, _matchAll);
     })();
 
-    // Patch cache.add to handle errors gracefully
+    // Patch cache.add to handle quota errors and track keys
     (() => {
-      // Store reference to the original add method
       const _add = cache.prototype.add;
-      // Skip if method doesn't exist on this prototype
       if (!_add) return;
       
-      // Override add with error handling wrapper
+      // On quota exceeded: fails silently, app continues without caching
+      // On success: tracks the key for .keys() polyfill
       cache.prototype.add = extend(async function add(...args) {
         let added;
         try {
-          // Attempt to call the original add method (fetches URL and caches response)
-          added =  await _add.apply(this, args);
+          added = await _add.apply(this, args);
           const key = String(args[0]?.url ?? args[0]);
-          putKeys(this,key);
+          await putKeys(this,key);
         } catch (e) {
-          // If add fails (e.g., network error, quota exceeded, invalid URL), log and continue
-          // Returning undefined allows code to continue without cached result
           console.warn(e, this, ...args);
         }
         return added;
       }, _add);
     })();
 
-    // Patch cache.addAll to handle errors gracefully
+    // Patch cache.addAll to handle quota errors
     (() => {
-      // Store reference to the original addAll method
       const _addAll = cache.prototype.addAll;
-      // Skip if method doesn't exist on this prototype
       if (!_addAll) return;
       
-      // Override addAll with error handling wrapper
+      // On quota exceeded: fails silently, allows graceful degradation
       cache.prototype.addAll = extend(async function addAll(...args) {
         try {
-          // Attempt to call the original addAll method (fetches multiple URLs and caches)
           return await _addAll.apply(this, args);
         } catch (e) {
-          // If addAll fails (quota exceeded, any single fetch fails), log and continue
-          // Allows graceful degradation when bulk caching fails
           console.warn(e, this, ...args);
         }
       }, _addAll);
     })();
 
-    // Patch cache.put to handle errors gracefully
+    // Patch cache.put to handle quota errors and track keys
     (() => {
-      // Store reference to the original put method
       const _put = cache.prototype.put;
-      // Skip if method doesn't exist on this prototype
       if (!_put) return;
       
-      // Override put with error handling wrapper
+      // On quota exceeded: fails silently, treats cache as best-effort
+      // On success: tracks the key for .keys() polyfill
       cache.prototype.put = extend(async function put(...args) {
         let output;
         try {
-          // Attempt to call the original put method (stores request/response pair in cache)
           output = await _put.apply(this, args);
           const key = String(args[0]?.url ?? args[0]);
-          putKeys(this,key);
+          await putKeys(this,key);
         } catch (e) {
-          // If put fails (e.g., quota exceeded, invalid request/response), log and continue
-          // Allows code to continue even if caching fails - treats cache as best-effort
           console.warn(e, this, ...args);
         }
         return output;
       }, _put);
     })();
 
-    // Patch cache.delete to handle errors gracefully
+    // Patch cache.delete to handle quota errors and track keys
     (() => {
-      // Store reference to the original delete method
-      // Using _delete to avoid reserved keyword conflict
       const _delete = cache.prototype.delete;
-      // Skip if method doesn't exist on this prototype
       if (!_delete) return;
       
-      // Override delete with error handling wrapper
-      // Using $delete as function name since 'delete' is a reserved keyword
+      // On error: returns false (consistent with "key not found" behavior)
+      // On success: removes key from tracking system
       cache.prototype.delete = extend(async function $delete(...args) {
         let del
         try {
-          // Attempt to call the original delete method (removes entry from cache)
           del = await _delete.apply(this, args);
           const key = String(args[0]?.url ?? args[0]);
-          deleteKeys(this,key);
+          await deleteKeys(this,key);
         } catch (e) {
-          // If delete fails (e.g., cache access error), log and return false
-          // Returning false is consistent with the normal return value when entry doesn't exist
           console.warn(e, this, ...args);
           return false;
         }
@@ -207,25 +192,24 @@
       }, _delete);
     })();
 
-    // Patch cache.keys to handle errors gracefully
+    // Patch/polyfill cache.keys for Cloudflare Workers
     (() => {
-      // Store reference to the original keys method
       const _keys = cache.prototype.keys;
-      // Skip if method doesn't exist on this prototype
       if (!_keys) return;
       
-      // Override keys with error handling wrapper
+      // POLYFILL: Cloudflare Workers doesn't implement .keys()
+      // First tries native implementation (will fail/return empty in CF Workers)
+      // Falls back to our custom key tracking system stored in '&keys' cache
       cache.prototype.keys = extend(async function keys(...args) {
         let cacheKeys;
         try {
-          // Attempt to call the original keys method (returns array of cached Request objects)
           cacheKeys = await _keys.apply(this, args);
         } catch (e) {
-          // If keys fails (e.g., cache access error, quota issues), log and return empty array
-          // Allows iteration over results without crashing
           console.warn(e, this, ...args);
           cacheKeys = [];
         }
+        
+        // Fallback to key tracking system if native method returns nothing
         if(!cacheKeys?.length){
           try{
             const __keys__ = await caches.open('&keys');
@@ -239,44 +223,36 @@
       }, _keys);
     })();
 
-    // Patch caches.open (CacheStorage method) to handle errors gracefully
+    // Patch caches.open to handle quota errors and add cache naming
     (() => {
-      // Store reference to the original open method
       const _open = cache.prototype.open;
-      // Skip if method doesn't exist (this is CacheStorage-specific)
       if (!_open) return;
       
-      // Override open with error handling wrapper
+      // On quota exceeded: returns empty Cache object, operations will no-op
+      // Adds '&name' property for key tracking system
       cache.prototype.open = extend(async function open(...args) {
         let store;
         try {
-          // Attempt to open the named cache
           store = await _open.apply(this, args);
         } catch (e) {
-          // If open fails (e.g., quota exceeded, invalid name), log and return empty Cache object
-          // Returning an empty Cache allows code to continue with cache operations that will no-op
           console.warn(e, this, ...args);
           store = Object.create(Cache.prototype);
         }
         store['&name'] = String(args[0]);
+        return store;
       }, _open);
     })();
 
-    // Patch caches.has (CacheStorage method) to handle errors gracefully
+    // Patch caches.has to handle errors gracefully
     (() => {
-      // Store reference to the original has method
       const _has = cache.prototype.has;
-      // Skip if method doesn't exist (this is CacheStorage-specific)
       if (!_has) return;
       
-      // Override has with error handling wrapper
+      // On error: returns false, allowing graceful fallback
       cache.prototype.has = extend(async function has(...args) {
         try {
-          // Attempt to check if named cache exists
           return await _has.apply(this, args);
         } catch (e) {
-          // If has fails (e.g., cache access error), log and return false
-          // Returning false indicates cache doesn't exist, allowing graceful fallback
           console.warn(e, this, ...args);
           return false;
         }
