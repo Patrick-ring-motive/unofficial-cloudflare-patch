@@ -63,6 +63,7 @@
       }catch{}
       cacheKeys ??= [];
       cacheKeys = [...new Set([...cacheKeys,...args])];
+      store['&recentKeys'] = cacheKeys;
       return await __keys__.put(url,new Response(JSON.stringify(cacheKeys)));
     }catch(e){
       console.warn(e,...args);
@@ -81,6 +82,7 @@
       }catch{}
       cacheKeys ??= [];
       cacheKeys = cacheKeys.filter(k=>!args.includes(k));
+      store['&recentKeys'] = cacheKeys;
       return await __keys__.put(url,new Response(JSON.stringify(cacheKeys)));
     }catch(e){
       console.warn(e,...args);
@@ -227,6 +229,7 @@
             cacheKeys = [];
           }
         }
+        this['&recentKeys'] = cacheKeys;
         return cacheKeys;
       }, _keys);
     })();
