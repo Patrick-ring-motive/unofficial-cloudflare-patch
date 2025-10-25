@@ -37,6 +37,8 @@
         }
         return thisClass;
     };
+  Q(()=>{caches['&name']='caches'});
+  Q(()=>{caches.default['&name']='default'});
   // Patch both Cache and CacheStorage prototypes with error handling
   // This ensures all cache operations are resilient across both APIs
   for (const cache of [Cache, CacheStorage]) {
