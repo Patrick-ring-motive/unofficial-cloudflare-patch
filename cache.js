@@ -85,7 +85,7 @@
       cacheKeys ??= [];
       cacheKeys = cacheKeys.filter(k=>!args.includes(k));
       store['&recentKeys'] = cacheKeys;
-      return await _put(__keys__,url,new Response(JSON.stringify(cacheKeys)));
+      return await _put.call(__keys__,url,new Response(JSON.stringify(cacheKeys)));
     }catch(e){
       console.warn(e,...args);
     }
