@@ -52,11 +52,13 @@
   // a separate '&keys' cache that stores lists of keys for each cache
   
   // Add keys to the tracking cache when items are stored
+  const _put = Cache.prototype.put;
+  const _match = Cache.prototype.match;
   const putKeys = async (store,...args)=>{
     try{
       const __keys__ = await caches.open('&keys');
       const url = `https://cache.keys/${encodeURI(store['&name'])}`;
-      const keyMatch = await __keys__.match(url);
+      const keyMatch = await _match.call(__keys__,url);
       let cacheKeys;
       try{
         cacheKeys = await keyMatch.clone().json();
@@ -64,7 +66,7 @@
       cacheKeys ??= [];
       cacheKeys = [...new Set([...cacheKeys,...args])];
       store['&recentKeys'] = cacheKeys;
-      return await __keys__.put(url,new Response(JSON.stringify(cacheKeys)));
+      return await _put.call(__keys__,url,new Response(JSON.stringify(cacheKeys)));
     }catch(e){
       console.warn(e,...args);
     }
@@ -75,7 +77,7 @@
     try{
       const __keys__ = await caches.open('&keys');
       const url = `https://cache.keys/${encodeURI(store['&name'])}`;
-      const keyMatch = await __keys__.match(url);
+      const keyMatch = await _match.call(__keys__,url);
       let cacheKeys;
       try{
         cacheKeys = await keyMatch.clone().json();
@@ -83,7 +85,7 @@
       cacheKeys ??= [];
       cacheKeys = cacheKeys.filter(k=>!args.includes(k));
       store['&recentKeys'] = cacheKeys;
-      return await __keys__.put(url,new Response(JSON.stringify(cacheKeys)));
+      return await _put(__keys__,url,new Response(JSON.stringify(cacheKeys)));
     }catch(e){
       console.warn(e,...args);
     }
